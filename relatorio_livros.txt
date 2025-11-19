@@ -1,0 +1,15 @@
+--- RELATORIO DE LIVROS ---
+Total de registros: 2
+
+Registro 0:
+Titulo: bob
+Genero: esponja
+Ano: 19
+Preco: R$ 19,00
+-------------------------
+Registro 1:
+Titulo: bob
+Genero: esponja 2
+Ano: 1
+Preco: R$ 1,00
+-------------------------
