@@ -22,28 +22,28 @@ void exluir(FILE *arq);
 void cadastrar(FILE *arq){
     reg livro;
     printf("---Cadastrar livro---\n");
-    printf("Registro numero: %d\n", tamanho(arq) + 1);
+    printf("Registro número: %d\n", tamanho(arq) + 1);
     tamanho(arq) +1;
     
     //ler string
     printf("Nome do livro: ");
     ler_string(livro.titulo, sizeof(livro.titulo));
     
-    printf("Genero do livro: ");
+    printf("Gênero do livro: ");
     ler_string(livro.genero, sizeof(livro.genero));
     
-    printf("Ano de lancamento do livro: ");
+    printf("Ano de lançamento do livro: ");
     scanf("%d", &livro.data);
     limpa_buffer();
     
-    printf("Preco do livro:");
+    printf("Preço do livro:");
     scanf("%f", &livro.preco);
     limpa_buffer();
     
     fseek(arq, 0, SEEK_END);
     fwrite(&livro, sizeof(reg), 1, arq);
     
-    printf("\nLivro cadastrado.\n");
+    printf("Livro cadastrado.");
 }
 
 void ler_string(char *buffer, int tam) {
@@ -71,7 +71,7 @@ void consultar(FILE*arq) {
         return;
     }
     printf("Existem %d livros .\n", total);
-    printf("Digite o registro a ser consultado (indice começa em 0): ");
+    printf("Digite o registro a ser consultado (índice começa em 0): ");
     scanf("%d", &indice);
     limpa_buffer();
     if (indice >= 0 && indice < total) {
@@ -112,13 +112,79 @@ void gerar_arquivo_txt(FILE *arq) {
         fprintf(txt, "Registro %d:\n", i);
         fprintf(txt, "Titulo: %s\n", l.titulo);
         fprintf(txt, "Genero: %s\n", l.genero);
-        fprintf(txt, "Ano de lançamento: %d\n", l.data);
+        fprintf(txt, "Ano: %d\n", l.data);
         fprintf(txt, "Preco: R$ %.2f\n", l.preco);
         fprintf(txt, "-------------------------\n");
     }
 
     fclose(txt);
     printf("\nArquivo '%s' gerado com sucesso!\n", nome_txt);
+}
+
+void excluir(FILE *arq) {
+    int indice, i;
+    int total = tamanho(arq);
+    reg livro_lido;
+    
+    printf("\n--- EXCLUIR LIVRO ---\n");
+    if (total == 0) {
+        printf("Nenhum livro cadastrado para exclusao.\n");
+        return;
+    }
+    
+    printf("Existem %d livros.\n", total);
+    printf("Digite o registro a ser EXCLUIDO (indice comeca em 0): ");
+    
+    if (scanf("%d", &indice) != 1) {
+        printf("Entrada invalida.\n");
+        limpa_buffer();
+        return;
+    }
+    limpa_buffer();
+    
+    if (indice < 0 || indice >= total) {
+        printf("Erro: Registro nao encontrado!\n");
+        return;
+    }
+
+    FILE *temp_arq = fopen("temp_livros.bin", "w+b"); 
+    if (temp_arq == NULL) {
+        printf("Erro ao criar arquivo temporario para exclusao.\n");
+        return;
+    }
+
+
+    fseek(arq, 0, SEEK_SET); 
+    
+    for (i = 0; i < total; i++) {
+        fread(&livro_lido, sizeof(reg), 1, arq);
+        
+        if (i != indice) {
+            fwrite(&livro_lido, sizeof(reg), 1, temp_arq);
+        } else {
+            
+            printf("\nREGISTRO EXCLUIDO:\n");
+            printf("Titulo: %s\n", livro_lido.titulo);
+            printf("-----------------------\n");
+        }
+    }
+
+    fclose(arq);
+    fclose(temp_arq);
+
+    if (remove("livros.bin") != 0) {
+        printf("Erro ao remover o arquivo original.\n");
+        return;
+    }
+
+    if (rename("temp_livros.bin", "livros.bin") != 0) {
+        printf("Erro ao renomear o arquivo temporario.\n");
+        return;
+    }
+    
+    printf("Livro (Registro %d) excluido com sucesso!\n", indice);
+ 
+    printf("\n>>> O arquivo foi fechado e renomeado. Por favor, reinicie o programa para continuar usando o arquivo atualizado. <<<\n");
 }
 
 int main()
@@ -140,9 +206,10 @@ int main()
         printf("1. Cadastrar Livro\n");
         printf("2. Consultar\n");
         printf("3. Consultar total de livros.\n");
-        printf("4. Gerar relatorio.\n");
+        printf("4. Gerar relatório.\n");
+        printf("5. Excluir item.\n");
         printf("0. Sair\n\n");
-        printf("Opcao:");
+        printf("Opção:");
         scanf("%d", &op);
         limpa_buffer();
         
@@ -159,11 +226,20 @@ int main()
             case 4:
                 gerar_arquivo_txt(arquivo);
                 break;
+            case 5:
+                excluir(arquivo);
+                arquivo = fopen("livros.bin", "r+b");
+                if (arquivo == NULL) {
+                    printf("Erro fatal: Nao foi possivel reabrir o arquivo 'livros.bin' apos a exclusao.\n");
+                    op = 0; 
+                } else {
+                    printf("Arquivo reaberto com sucesso para continuar operacao.\n");
+                }
             case 0:
                 printf("Finalizando.");
                 break;
             default:
-                printf("Opcao invalida\n");
+                printf("Opção inválida\n");
         }
     }while (op != 0);
     
